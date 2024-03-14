@@ -46,7 +46,7 @@ object CheckPackageNameBloc {
 
             我们也可以始终认为Shadow App是宿主的扩展代码，使用是宿主的一部分，那么采用宿主的包名就是理所应当的了。
              */
-            throw ParsePluginApkException("插件和宿主包名不一致。宿主:${hostAppContext.packageName} 插件:${pluginManifest.applicationPackageName}")
+//            throw ParsePluginApkException("插件和宿主包名不一致。宿主:${hostAppContext.packageName} 插件:${pluginManifest.applicationPackageName}")
         }
     }
 }
