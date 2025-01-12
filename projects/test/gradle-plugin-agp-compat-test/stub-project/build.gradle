@@ -23,9 +23,15 @@ buildscript {
         classpath "com.tencent.shadow.core:gradle-plugin:$ShadowVersion"
     }
 }
-
-apply plugin: 'com.android.application'
-apply plugin: 'com.tencent.shadow.plugin'
+try {
+    plugins {
+        id 'com.android.application' version "$TestAGPVersion" apply true
+        id 'com.tencent.shadow.plugin' version "$ShadowVersion" apply true
+    }
+} catch (Exception ignored) {
+    apply plugin: 'com.android.application'
+    apply plugin: 'com.tencent.shadow.plugin'
+}
 
 allprojects {
     repositories {
@@ -72,6 +78,48 @@ android {
     // 将插件的资源ID分区改为和宿主0x7F不同的值
     aaptOptions {
         additionalParameters "--package-id", "0x7E", "--allow-reserved-package-id"
+    }
+}
+
+// 创建两个假的apk，用于验证打包流程（packagePlugin）
+afterEvaluate {
+    tasks.getByPath(":stub-project:assemblePluginA1B2Debug").doLast {
+        File loader = project.file("build/outputs/apk/plugina1b2debug/loader.apk")
+        File runtime = project.file("build/outputs/apk/plugina1b2debug/runtime.apk")
+        loader.parentFile.mkdirs()
+        loader.createNewFile()
+        runtime.createNewFile()
+    }
+}
+
+shadow {
+    packagePlugin {
+        pluginTypes {
+            A1B2Debug {
+                loaderApkConfig = new Tuple2('loader.apk', ':stub-project:assemblePluginA1B2Debug')
+                runtimeApkConfig = new Tuple2('runtime.apk', ':stub-project:assemblePluginA1B2Debug')
+                pluginApks {
+                    pluginApk1 {
+                        businessName = 'stub-project'
+                        partKey = 'stub-project'
+                        buildTask = ':stub-project:assemblePluginA1B2Debug'
+                        apkPath = 'stub-project/build/outputs/apk/pluginA1B2/debug/stub-project-plugin-A1-B2-debug.apk'
+                        dependsOn = ['Core', 'Base']
+                        hostWhiteList = ["androidx.test.espresso",
+                                         "com.tencent.shadow.test.lib.plugin_use_host_code_lib.interfaces"]
+                    }
+                }
+            }
+        }
+
+        loaderApkProjectPath = 'stub-project'
+
+        runtimeApkProjectPath = 'stub-project'
+
+        uuid = '1234567890'
+        version = 4
+        compactVersion = [1, 2, 3]
+        uuidNickName = "1.1.5"
     }
 }
 
